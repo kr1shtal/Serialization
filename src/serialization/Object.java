@@ -16,12 +16,15 @@ public class Object {
 	private short stringCount;
 	private short arrayCount;
 	
-	private List<Field> fields = new ArrayList<Field>();
-	private List<Str> strings = new ArrayList<Str>();
-	private List<Array> arrays = new ArrayList<Array>();
+	public List<Field> fields = new ArrayList<Field>();
+	public List<Str> strings = new ArrayList<Str>();
+	public List<Array> arrays = new ArrayList<Array>();
 	
-	private int size = Type.getSize(Type.BYTE) + Type.getSize(Type.SHORT) + 
-			Type.getSize(Type.INTEGER) + Type.getSize(Type.SHORT) + Type.getSize(Type.SHORT);
+	private int size = 1 + 2 + 4 + 2 + 2 + 2;
+	
+	private Object() {
+		
+	}
 	
 	public Object(String name) {
 		setName(name);
@@ -36,6 +39,14 @@ public class Object {
 		 nameLength = (short) name.length();
 		 this.name = name.getBytes();
 		 size += nameLength;
+	}
+	
+	public String getName() {
+		return new String(name, 0, nameLength);
+	}
+	
+	public int getSize() {
+		return size;
 	}
 	
 	public int getBytes(byte[] dest, int pointer) {
@@ -59,10 +70,6 @@ public class Object {
 		return pointer;
 	}
 	
-	public int getSize() {
-		return size;
-	}
-	
 	public void addField(Field field) {
 		fields.add(field);
 		size += field.getSize();
@@ -82,6 +89,50 @@ public class Object {
 		size += array.getSize();
 		
 		arrayCount = (short) arrays.size();
+	}
+	
+	public static Object Deserialize(byte[] data, int pointer) {
+		byte containerType = data[pointer++];
+		assert(containerType == CONTAINER_TYPE);
+		
+		Object result = new Object();
+		result.nameLength = readShort(data, pointer);
+		pointer += 2;
+		result.name = readString(data, pointer, result.nameLength).getBytes();
+		pointer += result.nameLength;
+		
+		result.size = readInt(data, pointer);
+		pointer += 4;
+		
+ 		result.fieldCount = readShort(data, pointer);
+		pointer += 2;
+
+		for (int i = 0; i < result.fieldCount; i++) {
+			Field field = Field.Deserialize(data, pointer);
+			result.fields.add(field);
+			pointer += field.getSize();
+		}
+		
+		result.stringCount = readShort(data, pointer);
+		pointer += 2;
+
+		for (int i = 0; i < result.stringCount; i++) {
+			Str string = Str.Deserialize(data, pointer);
+			result.strings.add(string);
+			pointer += string.getSize();
+		}
+		
+		result.arrayCount = readShort(data, pointer);
+		pointer += 2;
+
+		for (int i = 0; i < result.arrayCount; i++) {
+			Array array = Array.Deserialize(data, pointer);
+			result.arrays.add(array);
+			pointer += array.getSize();
+		}
+		
+		return result;
+		
 	}
 	
 }

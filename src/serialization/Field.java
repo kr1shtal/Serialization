@@ -15,10 +15,24 @@ public class Field {
 		
 	}
 	
+	public Field(String name) {
+		setName(name);
+	}
+	
 	public void setName(String name) {
 		assert(name.length() < Short.MAX_VALUE);
 		nameLength = (short) name.length();
 		this.name = name.getBytes();
+	}
+	
+	public String getName() {
+		return new String(name, 0, nameLength);
+	}
+	
+	public int getSize() {
+		assert(data.length == Type.getSize(type));
+		
+		return 1 + 2 + name.length + 1 + data.length;
 	}
 	
 	public int getBytes(byte[] dest, int pointer) {
@@ -29,12 +43,6 @@ public class Field {
 		pointer = writeBytes(dest, pointer, data);
 		
 		return pointer;
-	}
-	
-	public int getSize() {
-		assert(data.length == Type.getSize(type));
-		
-		return Type.getSize(Type.BYTE) + Type.getSize(Type.SHORT) + name.length + Type.getSize(Type.BYTE) + data.length;
 	}
 	
 	public static Field Byte(String name, byte value) {
@@ -115,6 +123,25 @@ public class Field {
 		writeBytes(field.data, 0, value);
 		
 		return field;
+	}
+	
+	public static Field Deserialize(byte[] data, int pointer) {
+		byte containerType = data[pointer++];
+		assert(containerType == CONTAINER_TYPE);
+		
+		Field result = new Field();
+		result.nameLength = readShort(data, pointer);
+		pointer += 2;
+		result.name = readString(data, pointer, result.nameLength).getBytes();
+		pointer += result.nameLength;
+	
+		result.type = data[pointer++];
+		
+		result.data = new byte[Type.getSize(result.type)];
+		readBytes(data, pointer, result.data);
+		pointer += Type.getSize(result.type);
+		
+		return result;
 	}
 	
 }

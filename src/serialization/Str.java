@@ -11,11 +11,14 @@ public static final byte CONTAINER_TYPE = ContainerType.STRING;
 	public byte[] name;
 	private char[] characters;
 	
-	public int size = Type.getSize(Type.BYTE) + Type.getSize(Type.SHORT) + 
-			Type.getSize(Type.INTEGER) + Type.getSize(Type.INTEGER);
+	public int size = 1 + 2 + 4 + 4;
 	
 	private Str() {
 
+	}
+	
+	public Str(String name) {
+		setName(name);
 	}
 	
 	public void setName(String name) {
@@ -29,6 +32,18 @@ public static final byte CONTAINER_TYPE = ContainerType.STRING;
 		 size += nameLength;
 	}
 	
+	public String getName() {
+		return new String(name, 0, nameLength);
+	}
+	
+	public String getString() {
+		return new String(characters);
+	}
+	
+	public int getSize() {
+		return size;
+	}
+	
 	public int getBytes(byte[] dest, int pointer) {
 		pointer = writeBytes(dest, pointer, CONTAINER_TYPE);
 		pointer = writeBytes(dest, pointer, nameLength);
@@ -38,10 +53,6 @@ public static final byte CONTAINER_TYPE = ContainerType.STRING;
 		pointer = writeBytes(dest, pointer, characters);
 		
 		return pointer;
-	}
-	
-	public int getSize() {
-		return size;
 	}
 	
 	public int getDataSize() {
@@ -61,6 +72,29 @@ public static final byte CONTAINER_TYPE = ContainerType.STRING;
 		string.updateSize();
 		
 		return string;
+	}
+	
+	public static Str Deserialize(byte[] data, int pointer) {
+		byte containerType = data[pointer++];
+		assert(containerType == CONTAINER_TYPE);
+		
+		Str result = new Str();
+		result.nameLength = readShort(data, pointer);
+		pointer += 2;
+		result.name = readString(data, pointer, result.nameLength).getBytes();
+		pointer += result.nameLength;
+	
+		result.size = readInt(data, pointer);
+		pointer += 4;
+		
+		result.count = readInt(data, pointer);
+		pointer += 4;
+		
+		result.characters = new char[result.count];
+		readChars(data, pointer, result.characters);
+		
+		pointer += result.count * Type.getSize(Type.CHAR);
+		return result;
 	}
 	
 }
