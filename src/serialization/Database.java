@@ -3,23 +3,21 @@ package serialization;
 import static serialization.SerializationUtils.*;
 
 import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-public class Database {
+public class Database extends Container {
 
 	public static final byte[] HEADER = "JSDB".getBytes();
+	public static final short VERSION = 0x0100;
 	public static final byte CONTAINER_TYPE = ContainerType.DATABASE;
-	
-	public short nameLength;
-	public byte[] name;
 	
 	private short objectCount;
 	public List<Object> objects = new ArrayList<Object>();
-	
-	private int size = HEADER.length + 1 + 2 + 4 + 2;
 	
 	private Database() {
 		
@@ -27,21 +25,8 @@ public class Database {
 	
 	public Database(String name) {
 		setName(name);
-	}
-	
-	public void setName(String name) {
-		 assert(name.length() < Short.MAX_VALUE);
-		 
-		 if (this.name != null)
-			 size -= this.name.length;
-		 
-		 nameLength = (short) name.length();
-		 this.name = name.getBytes();
-		 size += nameLength;
-	}
-	
-	public String getName() {
-		return new String(name, 0, nameLength);
+		
+		size += HEADER.length + 2 + 1 + 2;
 	}
 	
 	public int getSize() {
@@ -50,6 +35,7 @@ public class Database {
 	
 	public int getBytes(byte[] dest, int pointer) {
 		pointer = writeBytes(dest, pointer, HEADER);
+		pointer = writeBytes(dest, pointer, VERSION);
 		pointer = writeBytes(dest, pointer, CONTAINER_TYPE);
 		pointer = writeBytes(dest, pointer, nameLength);
 		pointer = writeBytes(dest, pointer, name);
@@ -69,10 +55,23 @@ public class Database {
 		objectCount = (short) objects.size();
 	}
 
+	public Object findObject(String name) {
+		for (Object object : objects)
+			if (object.getName().equals(name))
+				return object;
+		return null;
+	}
+	
 	public static Database Deserialize(byte[] data) {
 		int pointer = 0;
 		assert(readString(data, pointer, HEADER.length).equals(HEADER));
 		pointer += HEADER.length;
+		
+		if (readShort(data, pointer) != VERSION) {
+			System.err.println("Invalid JSDB version!");
+			return null;
+		}
+		pointer += 2;
 		
 		byte containerType = readByte(data, pointer++);
 		assert(containerType == CONTAINER_TYPE);
@@ -110,6 +109,18 @@ public class Database {
 		}
 		
 		return Deserialize(buffer);
+	}
+	
+	public void serializeToFile(String path) {
+		byte[] data = new byte[getSize()];
+		getBytes(data, 0);
+		try {
+			BufferedOutputStream stream = new BufferedOutputStream(new FileOutputStream(path));
+			stream.write(data);
+			stream.close();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 	}
 	
 }

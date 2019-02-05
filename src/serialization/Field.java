@@ -2,14 +2,12 @@ package serialization;
 
 import static serialization.SerializationUtils.*;
 
-public class Field {
+public class Field extends Container {
 
 	public static final byte CONTAINER_TYPE = ContainerType.FIELD;
-	
-	public short nameLength;
+
 	public byte type;
 	public byte[] data;
-	public byte[] name; 
 	
 	private Field() {
 		
@@ -17,16 +15,6 @@ public class Field {
 	
 	public Field(String name) {
 		setName(name);
-	}
-	
-	public void setName(String name) {
-		assert(name.length() < Short.MAX_VALUE);
-		nameLength = (short) name.length();
-		this.name = name.getBytes();
-	}
-	
-	public String getName() {
-		return new String(name, 0, nameLength);
 	}
 	
 	public int getSize() {
@@ -43,6 +31,38 @@ public class Field {
 		pointer = writeBytes(dest, pointer, data);
 		
 		return pointer;
+	}
+	
+	public byte getByte() {
+		return data[0];
+	}
+	
+	public short getShort() {
+		return readShort(data, 0);
+	}
+	
+	public char getChar() {
+		return readChar(data, 0);
+	}
+	
+	public int getInt() {
+		return readInt(data, 0);
+	}
+	
+	public long getLong() {
+		return readLong(data, 0);
+	}
+	
+	public float getFloat() {
+		return readFloat(data, 0);
+	}
+	
+	public double getDouble() {
+		return readDouble(data, 0);
+	}
+	
+	public boolean getBoolean() {
+		return readBoolean(data, 0);
 	}
 	
 	public static Field Byte(String name, byte value) {

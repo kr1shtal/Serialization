@@ -5,12 +5,9 @@ import java.util.List;
 
 import static serialization.SerializationUtils.*;
 
-public class Object {
+public class Object extends Container {
 	
 	public static final byte CONTAINER_TYPE = ContainerType.OBJECT;
-	
-	public short nameLength;
-	public byte[] name;
 	
 	private short fieldCount;
 	private short stringCount;
@@ -20,29 +17,13 @@ public class Object {
 	public List<Str> strings = new ArrayList<Str>();
 	public List<Array> arrays = new ArrayList<Array>();
 	
-	private int size = 1 + 2 + 4 + 2 + 2 + 2;
-	
 	private Object() {
 		
 	}
 	
 	public Object(String name) {
+		size += 1 + 2 + 2 + 2;
 		setName(name);
-	}
-	
-	public void setName(String name) {
-		 assert(name.length() < Short.MAX_VALUE);
-		 
-		 if (this.name != null)
-			 size -= this.name.length;
-		 
-		 nameLength = (short) name.length();
-		 this.name = name.getBytes();
-		 size += nameLength;
-	}
-	
-	public String getName() {
-		return new String(name, 0, nameLength);
 	}
 	
 	public int getSize() {
@@ -89,6 +70,28 @@ public class Object {
 		size += array.getSize();
 		
 		arrayCount = (short) arrays.size();
+	}
+	
+	public Field findField(String name) {
+		for (Field field : fields)
+			if (field.getName().equals(name))
+				return field;
+		return null;
+	}
+	
+	
+	public Str findString(String name) {
+		for (Str string : strings)
+			if (string.getName().equals(name))
+				return string;
+		return null;
+	}
+	
+	public Array findArray(String name) {
+		for (Array array : arrays)
+			if (array.getName().equals(name))
+				return array;
+		return null;
 	}
 	
 	public static Object Deserialize(byte[] data, int pointer) {

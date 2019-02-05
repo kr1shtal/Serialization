@@ -2,38 +2,19 @@ package serialization;
 
 import static serialization.SerializationUtils.*;
 
-public class Str {
+public class Str extends Container {
 
-public static final byte CONTAINER_TYPE = ContainerType.STRING;
+	public static final byte CONTAINER_TYPE = ContainerType.STRING;
 	
 	public int count;
-	public short nameLength;
-	public byte[] name;
 	private char[] characters;
 	
-	public int size = 1 + 2 + 4 + 4;
-	
 	private Str() {
-
+		size += 1 + 4;
 	}
 	
 	public Str(String name) {
 		setName(name);
-	}
-	
-	public void setName(String name) {
-		 assert(name.length() < Short.MAX_VALUE);
-		 
-		 if (this.name != null)
-			 size -= this.name.length;
-		 
-		 nameLength = (short) name.length();
-		 this.name = name.getBytes();
-		 size += nameLength;
-	}
-	
-	public String getName() {
-		return new String(name, 0, nameLength);
 	}
 	
 	public String getString() {
@@ -42,6 +23,14 @@ public static final byte CONTAINER_TYPE = ContainerType.STRING;
 	
 	public int getSize() {
 		return size;
+	}
+	
+	public int getDataSize() {
+		return characters.length * Type.getSize(Type.CHAR);
+	}
+	
+	private void updateSize() {
+		size += getDataSize();
 	}
 	
 	public int getBytes(byte[] dest, int pointer) {
@@ -54,15 +43,6 @@ public static final byte CONTAINER_TYPE = ContainerType.STRING;
 		
 		return pointer;
 	}
-	
-	public int getDataSize() {
-		return characters.length * Type.getSize(Type.CHAR);
-	}
-	
-	private void updateSize() {
-		size += getDataSize();
-	}
-	
 	
 	public static Str Create(String name, String data) {
 		Str string = new Str();

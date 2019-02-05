@@ -2,14 +2,12 @@ package serialization;
 
 import static serialization.SerializationUtils.*;
 
-public class Array {
+public class Array extends Container {
 
 	public static final byte CONTAINER_TYPE = ContainerType.ARRAY;
 	
 	public int count;
-	public short nameLength;
 	public byte type;
-	public byte[] name;
 	public byte[] data;
 
 	private short[] shortData;
@@ -20,29 +18,12 @@ public class Array {
 	private double[] doubleData;
 	private boolean[] booleanData;
 	
-	public int size = 1 + 2 + 4 + 1 + 4;
-	
 	private Array() {
-		
+		size += 1 + 1 + 4;
 	}
 	
 	public Array(String name) {
 		setName(name);
-	}
-	
-	public void setName(String name) {
-		 assert(name.length() < Short.MAX_VALUE);
-		 
-		 if (this.name != null)
-			 size -= this.name.length;
-		 
-		 nameLength = (short) name.length();
-		 this.name = name.getBytes();
-		 size += nameLength;
-	}
-	
-	public String getName() {
-		return new String(name, 0, nameLength);
 	}
 	
 	public int getSize() {
